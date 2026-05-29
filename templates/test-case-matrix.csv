@@ -1,6 +1,15 @@
 ID,Folder,Endpoint,Method,Scenario,Input file/body,Expected status,Expected response check,Type,Pass/Fail,Evidence
-TC01,Functional,/health,GET,Service is alive,-,200,status=ok,functional,,
-TC02,Functional,/readings,POST,Create reading happy path,mock-data/sensor-reading-valid.json,201,"has reading_id, accepted=true",functional,,
-TC03,Negative,/readings,POST,Missing device_id,mock-data/sensor-reading-invalid-missing-device.json,400,Problem Details,negative,,
-TC04,Auth,/readings,POST,Missing token,mock-data/sensor-reading-valid.json,401,Problem Details,auth,,
-TC05,Boundary,/readings,POST,High temperature boundary,mock-data/sensor-reading-boundary.json,201/400,documented behavior,boundary,,
+TC01,00_Health,/health,GET,Kiểm tra trạng thái hoạt động ổn định của service,-,200,status=ok,functional,Pass,cli & report
+TC02,01_Functional,/vision/detect,POST,Gửi frame ảnh chụp camera phân tích vật thể (Happy Path),JSON (cameraId; imageRef; timestamp; motionConfidence),201,"has detectionId; detectedObjects (array)",functional,Pass,cli & report
+TC03,01_Functional,/vision/face-match,POST,Đối sánh khuôn mặt và kiểm tra chống giả mạo Liveness,JSON (imageRef; targetGallery),200,"has matched; isLive (boolean)",functional,Pass,cli & report
+TC04,01_Functional,/vision/detections/{id},GET,Truy vấn chi tiết kết quả nhận diện bằng ID vừa tạo,Path Parameter (savedDetectionId),200,has detectionId,functional,Pass,cli & report
+TC05,01_Functional,/vision/models/info,GET,Tra cứu danh sách và trạng thái mô hình AI đang chạy,-,200,has activeModels (array),functional,Pass,cli & report
+TC06,02_Auth,/vision/detect,POST,Gửi request thiếu header Authorization,JSON (Happy Payload),401,Problem Details,auth,Pass,cli & report
+TC07,02_Auth,/vision/detect,POST,Gửi request với bearer token không hợp lệ,JSON (Happy Payload),401,Problem Details,auth,Pass,cli & report
+TC08,03_Negative,/vision/detect,POST,Gửi request thiếu trường bắt buộc imageRef,JSON (Missing imageRef),400,Problem Details,negative,Pass,cli & report
+TC09,03_Negative,/vision/detect,POST,Gửi request sai định dạng cameraId (thiếu prefix CAM-),JSON (Invalid cameraId),400,Problem Details,negative,Pass,cli & report
+TC10,04_Boundary_Reliability,/vision/detect,POST,Gửi motionConfidence vượt giới hạn trên (>1.0),JSON (motionConfidence=1.5),400,Problem Details,boundary,Pass,cli & report
+TC11,04_Boundary_Reliability,/vision/detections,GET,Yêu cầu phân trang với limit cực đại,Query Parameter (limit=1000),200/400/422,Capped or Coded,boundary,Pass,cli & report
+TC12,05_Consumer_side_Smoke,/health (dependent),GET,Kiểm tra trạng thái hoạt động của IoT Ingestion mock,-,200,status=ok,smoke,Pass,cli & report
+TC13,05_Consumer_side_Smoke,/readings (dependent),POST,AI Vision gọi thử API ingest telemetry của IoT Ingestion mock,JSON (device_id; metric; value; timestamp),201,has reading_id,smoke,Pass,cli & report
+TC14,06_Local_only_NonFunctional,/vision/detect,POST,Kiểm tra SLA phản hồi GPU dưới 800ms (chạy trên local),JSON (Happy Payload),201,responseTime < 800ms,non-functional,Pass,cli & report
